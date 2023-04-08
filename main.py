@@ -1,16 +1,17 @@
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 from flask import Flask, jsonify, request
+from flask.helpers import send_file
 import requests
 
-app = Flask(__name__)
+app = Flask(__name__, static_url_path='/', static_folder='web')
 
 model_name = "philschmid/bart-large-cnn-samsum"
 tokenizer = AutoTokenizer.from_pretrained(model_name)
 model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
 
 @app.route('/')
-def hello_world():
-    return "<p>Jesus Christ is the one and only God</p>"
+def indexPage():
+    return send_file("web\index.html")
 
 # @app.route('/summarize', methods=['POST'])
 # def summarize():
@@ -23,11 +24,27 @@ def hello_world():
 #     summary = response.json()['summary']
 #     summary=jsonify({'summary': summary})
 #     return "<p>{summary}</p>"
-@app.route('/summarize', methods=['POST'])
-def summarize():
-    text = request.json['text']
+# @app.route('/summarize', methods=['POST'])
+# def summarize():
+#     summary = request.json['text']
+#     result=my_function(summary)
+#     return jsonify({'summary': result}) 
+
+def my_function(text):
     input_ids = tokenizer(text, return_tensors='pt', padding=True, truncation=True)['input_ids']
     summary_ids = model.generate(input_ids)
     summary = tokenizer.decode(summary_ids[0], skip_special_tokens=True)
-    summary =jsonify({'summary': summary})
-    return "<p>{summary}</p>"
+    return summary
+
+@app.route('/summarize', methods=['POST'])
+def summarize():
+    try:
+        summary = request.json['text']
+        if not summary:
+            raise ValueError('Input text is empty')
+        result = my_function(summary)
+        if not result:
+            raise ValueError('Unable to generate summary')
+        return jsonify({'summary': result})
+    except Exception as e:
+        return jsonify({'error': str(e)})
