@@ -1,9 +1,9 @@
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, render_template
 from flask.helpers import send_file
 import requests
 
-app = Flask(__name__, static_url_path='/', static_folder='web')
+app = Flask(__name__)
 
 model_name = "philschmid/bart-large-cnn-samsum"
 tokenizer = AutoTokenizer.from_pretrained(model_name)
@@ -11,7 +11,7 @@ model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
 
 @app.route('/')
 def indexPage():
-    return send_file("web\index.html")
+     return render_template("index.html")
 
 # @app.route('/summarize', methods=['POST'])
 # def summarize():
